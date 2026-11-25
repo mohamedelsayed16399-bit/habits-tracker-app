@@ -51,6 +51,23 @@ input{width:100%;background:#0f172a;border:1px solid #4338ca;color:#fff;border-r
 .opts button.on{border-color:#fff}
 .cl{width:34px!important;height:34px!important;border-radius:50%!important}
 .go{width:100%;background:#818cf8;color:#1e1b4b;border:0;border-radius:14px;padding:15px;font-size:18px;font-weight:800;font-family:inherit}
+.lvl{background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:18px;padding:14px;margin-bottom:12px;display:flex;align-items:center;gap:14px}
+.lvl .n{width:56px;height:56px;border-radius:50%;background:#ffffff26;display:grid;place-items:center;font-size:26px;font-weight:900}
+.lvl .t{flex:1}.lvl .t b{font-size:17px;display:block}.lvl .t span{font-size:12px;color:#e0e7ff}
+.lvl .xb{height:8px;background:#ffffff30;border-radius:5px;overflow:hidden;margin-top:6px}.lvl .xb i{display:block;height:100%;background:#fde68a;transition:.5s}
+.card2{background:#ffffff12;border-radius:18px;padding:14px;margin-bottom:12px}
+.bh{font-size:15px;font-weight:700;margin-bottom:10px;display:flex;justify-content:space-between}
+.bgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.bd{text-align:center;font-size:11px;color:#c7d2fe;background:#ffffff0d;border-radius:12px;padding:8px 2px}
+.bd span{display:block;font-size:26px;margin-bottom:2px}
+.bd.off{opacity:.35;filter:grayscale(1)}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:15px;gap:6px;text-align:center}
+.ch button{background:#ffffff14;border:0;color:#fff;border-radius:10px;width:42px;height:38px;font-size:20px}
+.cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:10px}
+.cgrid em{font-style:normal;font-size:11px;color:#94a3b8;text-align:center}
+.cgrid button{aspect-ratio:1;border:2px solid transparent;border-radius:10px;background:#ffffff12;color:#e2e8f0;font-size:14px;font-family:inherit;padding:0}
+.cgrid button:disabled{opacity:.25}
+.cgrid button.td{border-color:#fff}
 canvas#cf{position:fixed;inset:0;pointer-events:none;z-index:9}
 </style>
 </head>
@@ -59,10 +76,12 @@ canvas#cf{position:fixed;inset:0;pointer-events:none;z-index:9}
 <div class="wrap">
   <h1>🌱 عاداتي</h1><div class="sub" id="date"></div>
   <div class="sum"><div><b id="s1">٠</b><span>تمت النهارده</span></div><div><b id="s2">٠</b><span>أطول سلسلة 🔥</span></div><div><b id="s3">٠٪</b><span>هذا الأسبوع</span></div></div>
-  <div id="mg"></div><div class="ring"><i id="rg" style="width:0"></i></div>
+  <div class="lvl" id="lvl"></div><div id="mg"></div><div class="ring"><i id="rg" style="width:0"></i></div>
   <div class="bar2"><button id="exp">⬇️ نسخة احتياطية</button><button id="imp">⬆️ استرجاع</button><input type="file" id="impf" accept=".json,application/json" hidden></div>
+  <div class="card2"><div class="bh"><span>🏅 الإنجازات</span><span id="bc"></span></div><div class="bgrid" id="bg"></div></div>
   <div id="list"></div>
 </div>
+<div class="modal" id="calm"><div class="sheet"><div class="ch"><button id="cpv">›</button><b id="cti"></b><button id="cnx">‹</button></div><div class="cgrid" id="cg"></div><div class="pc" id="cst" style="text-align:center;margin-bottom:8px"></div><button class="del" id="ccl" style="width:100%">إغلاق</button></div></div>
 <button class="fab" id="add">+ عادة جديدة</button>
 <div class="modal" id="modal"><div class="sheet">
   <input id="nm" placeholder="اسم العادة (مثلاً: اشرب مية)" maxlength="30">
@@ -80,7 +99,32 @@ const dk=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+Strin
 const back=n=>{const d=new Date();d.setDate(d.getDate()-n);return d};
 const streak=h=>{let n=0,i=h.l[dk(back(0))]?0:1;while(h.l[dk(back(i))]){n++;i++}return n};
 const best=h=>{const ks=Object.keys(h.l).sort();let b=0,c=0,p=null;ks.forEach(k=>{const d=new Date(k+"T00:00:00");if(p&&Math.round((d-p)/864e5)==1)c++;else c=1;b=Math.max(b,c);p=d});return b};
-function render(){
+const TITLES=["مبتدئ","متحمس","منتظم","ملتزم","محترف","بطل","أسطورة","خارق"];
+function gstats(){const ks=new Set();S.h.forEach(h=>Object.keys(h.l).forEach(k=>ks.add(k)));let t=0;S.h.forEach(h=>t+=Object.keys(h.l).length);
+  let p=0;if(S.h.length>=2)ks.forEach(k=>{if(S.h.every(h=>h.l[k]))p++});return{t,b:Math.max(0,...S.h.map(best)),p}}
+const BADGES=[["f1","🌱","أول خطوة",g=>g.t>=1],["t10","⭐","١٠ أيام تسجيل",g=>g.t>=10],["t50","🌟","٥٠ تسجيل",g=>g.t>=50],["t100","💯","١٠٠ تسجيل",g=>g.t>=100],["t365","👑","٣٦٥ تسجيل",g=>g.t>=365],
+ ["s3","🔥","٣ أيام ورا بعض",g=>g.b>=3],["s7","🚀","أسبوع كامل",g=>g.b>=7],["s21","💪","٢١ يوم",g=>g.b>=21],["s30","🏆","شهر كامل",g=>g.b>=30],["s100","💎","١٠٠ يوم",g=>g.b>=100],
+ ["h3","🧩","٣ عادات",g=>S.h.length>=3],["pd","🎉","يوم مثالي",g=>g.p>=1],["pd7","🌈","٧ أيام مثالية",g=>g.p>=7]];
+const lvOf=xp=>Math.floor((1+Math.sqrt(1+xp/12.5))/2);
+function award(announce){S.b=S.b||{};const g=gstats(),xp=g.t*10+g.p*20,L=lvOf(xp);const nw=[];
+  BADGES.forEach(b=>{if(!S.b[b[0]]&&b[3](g)){S.b[b[0]]=Date.now();nw.push(b)}});
+  const old=S.lv||1;S.lv=Math.max(old,L);save();
+  if(announce){if(nw.length){flash("🏅 إنجاز جديد: "+nw.map(b=>b[1]+" "+b[2]).join("، "));confetti($("lvl"))}else if(L>old)flash("⬆️ وصلت مستوى "+AR(L)+": "+TITLES[Math.min(L-1,7)])}}
+function renderGam(){const g=gstats(),xp=g.t*10+g.p*20,L=lvOf(xp),lo=50*L*(L-1),hi=50*L*(L+1);
+  $("lvl").innerHTML=`<div class="n">${AR(L)}</div><div class="t"><b>${TITLES[Math.min(L-1,7)]}</b><span>${AR(xp)} نقطة خبرة · باقي ${AR(hi-xp)} للمستوى ${AR(L+1)}</span><div class="xb"><i style="width:${Math.round((xp-lo)/(hi-lo)*100)}%"></i></div></div>`;
+  const B=S.b||{};$("bc").textContent=AR(BADGES.filter(b=>B[b[0]]).length)+"/"+AR(BADGES.length);
+  $("bg").innerHTML=BADGES.map(b=>`<div class="bd ${B[b[0]]?"":"off"}"><span>${b[1]}</span>${b[2]}</div>`).join("")}
+let calI=-1,calD=new Date();
+function openCal(i){calI=i;calD=new Date();calD.setDate(1);renderCal();$("calm").classList.add("on")}
+function renderCal(){const h=S.h[calI];if(!h)return;const y=calD.getFullYear(),m=calD.getMonth(),dim=new Date(y,m+1,0).getDate(),off=new Date(y,m,1).getDay(),now=new Date(),tk=dk(now);
+  $("cti").textContent=h.i+" "+h.n+" · "+MN[m]+" "+AR(y);let html=DN.map(d=>`<em>${d.slice(0,3)}</em>`).join("");for(let k=0;k<off;k++)html+="<em></em>";let cnt=0,past=0;
+  for(let d=1;d<=dim;d++){const dt=new Date(y,m,d),k=dk(dt),fut=dt>now&&k!=tk,on=!!h.l[k];if(on)cnt++;if(!fut)past++;
+   html+=`<button data-k="${k}" class="${k==tk?"td":""}" ${fut?"disabled":""} style="${on?"background:"+h.c+";color:#0f172a;font-weight:800":""}">${AR(d)}</button>`}
+  $("cg").innerHTML=html;$("cst").textContent=AR(cnt)+" يوم من "+AR(past)+" ("+AR(past?Math.round(cnt/past*100):0)+"٪)"}
+$("cg").onclick=e=>{const b=e.target.closest("button[data-k]");if(!b||b.disabled)return;const h=S.h[calI],k=b.dataset.k;if(h.l[k])delete h.l[k];else h.l[k]=1;save();award(true);render();renderCal()};
+$("cpv").onclick=()=>{calD.setMonth(calD.getMonth()-1);renderCal()};$("cnx").onclick=()=>{const n=new Date(calD);n.setMonth(n.getMonth()+1);if(n<=new Date()){calD=n;renderCal()}};
+$("ccl").onclick=()=>$("calm").classList.remove("on");$("calm").onclick=e=>{if(e.target==$("calm"))$("calm").classList.remove("on")};
+function render(){renderGam();
   const t=new Date();$("date").textContent=DN[t.getDay()]+" "+AR(t.getDate())+" "+MN[t.getMonth()];
   const td=dk(t);let done=0;S.h.forEach(h=>{if(h.l[td])done++});
   let wk=0,wt=0;S.h.forEach(h=>{for(let i=0;i<7;i++){wt++;if(h.l[dk(back(i))])wk++}});
@@ -90,15 +134,17 @@ function render(){
   $("list").innerHTML=S.h.length?S.h.map((h,i)=>{
     const wkh=[6,5,4,3,2,1,0].map(n=>{const d=back(n);return `<div class="d ${n==0?"t":""}" data-hi="${i}" data-dk="${dk(d)}">${DN[d.getDay()]}<i class="${h.l[dk(d)]?"on":""}" style="${h.l[dk(d)]?"background:"+h.c:""}"></i></div>`}).join("");
     const heat=Array.from({length:42},(_,k)=>{const d=back(41-k);return `<i style="${h.l[dk(d)]?"background:"+h.c:""}"></i>`}).join("");
-    return `<div class="h"><div class="top"><div class="ic" style="background:${h.c}33">${h.i}</div><div class="nm"><b>${h.n.replace(/</g,"&lt;")}</b><span>🔥 ${AR(streak(h))} يوم · أفضل ${AR(best(h))}</span></div><button class="chk ${h.l[td]?"on":""}" data-i="${i}">${h.l[td]?"✓":""}</button></div><div class="week">${wkh}</div><div class="heat">${heat}</div><div class="pc">آخر ٣٠ يوم: ${AR(Math.round(Array.from({length:30},(_,k)=>h.l[dk(back(k))]?1:0).reduce((a,b)=>a+b,0)/30*100))}٪ · إجمالي ${AR(Object.keys(h.l).length)} يوم</div><button class="ed" data-ed="${i}">تعديل</button><button class="del" data-del="${i}">حذف</button></div>`}).join(""):'<p style="text-align:center;color:#a5b4fc;margin:50px 0">مفيش عادات لسه. دوس "عادة جديدة" وابدأ.</p>';
+    return `<div class="h"><div class="top"><div class="ic" style="background:${h.c}33">${h.i}</div><div class="nm"><b>${h.n.replace(/</g,"&lt;")}</b><span>🔥 ${AR(streak(h))} يوم · أفضل ${AR(best(h))}</span></div><button class="chk ${h.l[td]?"on":""}" data-i="${i}">${h.l[td]?"✓":""}</button></div><div class="week">${wkh}</div><div class="heat">${heat}</div><div class="pc">آخر ٣٠ يوم: ${AR(Math.round(Array.from({length:30},(_,k)=>h.l[dk(back(k))]?1:0).reduce((a,b)=>a+b,0)/30*100))}٪ · إجمالي ${AR(Object.keys(h.l).length)} يوم</div><button class="ed" data-cal="${i}">📅 التقويم</button><button class="ed" data-ed="${i}">تعديل</button><button class="del" data-del="${i}">حذف</button></div>`}).join(""):'<p style="text-align:center;color:#a5b4fc;margin:50px 0">مفيش عادات لسه. دوس "عادة جديدة" وابدأ.</p>';
 }
 $("list").onclick=e=>{const c=e.target.closest(".chk"),d=e.target.closest("[data-del]");
-  if(c){const h=S.h[+c.dataset.i],k=dk(new Date());if(h.l[k])delete h.l[k];else{h.l[k]=1;confetti(c)}save();render()}
+  if(c){const h=S.h[+c.dataset.i],k=dk(new Date());if(h.l[k])delete h.l[k];else{h.l[k]=1;confetti(c)}save();award(true);render()}
   else if(d){const i=+d.dataset.del,h=S.h[i];S.h.splice(i,1);save();render();undo("اتحذفت العادة",()=>{S.h.splice(i,0,h);save();render()})}
+  else if(e.target.closest("[data-cal]")){openCal(+e.target.closest("[data-cal]").dataset.cal)}
   else if(e.target.closest("[data-ed]")){openEd(+e.target.closest("[data-ed]").dataset.ed)}
-  else{const w=e.target.closest(".d[data-dk]");if(w){const h=S.h[+w.dataset.hi],k=w.dataset.dk;if(h.l[k])delete h.l[k];else h.l[k]=1;save();render()}}};
+  else{const w=e.target.closest(".d[data-dk]");if(w){const h=S.h[+w.dataset.hi],k=w.dataset.dk;if(h.l[k])delete h.l[k];else h.l[k]=1;save();award(true);render()}}};
 let ut=null,ufn=null;
-function undo(m,f){$("tm").textContent=m;ufn=f;$("toast").style.display="flex";clearTimeout(ut);ut=setTimeout(()=>{$("toast").style.display="none";ufn=null},5000)}
+function flash(m){$("tm").textContent=m;$("tu").style.display="none";ufn=null;$("toast").style.display="flex";clearTimeout(ut);ut=setTimeout(()=>{$("toast").style.display="none";$("tu").style.display=""},3800)}
+function undo(m,f){$("tu").style.display="";$("tm").textContent=m;ufn=f;$("toast").style.display="flex";clearTimeout(ut);ut=setTimeout(()=>{$("toast").style.display="none";ufn=null},5000)}
 $("tu").onclick=()=>{if(ufn)ufn();ufn=null;$("toast").style.display="none"};
 let ed=-1;
 function openEd(i){ed=i;const h=S.h[i];$("nm").value=h.n;ic=Math.max(0,ICONS.indexOf(h.i));cl=Math.max(0,COLS.indexOf(h.c));pick();$("edt").style.display="block";$("modal").classList.add("on")}
@@ -117,7 +163,8 @@ $("impf").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{
 let lastD=dk(new Date());setInterval(()=>{if(dk(new Date())!=lastD){lastD=dk(new Date());render()}},30000);document.addEventListener("visibilitychange",()=>{if(!document.hidden&&dk(new Date())!=lastD){lastD=dk(new Date());render()}});
 if(location.search.includes("demo")&&!S.h.length){const mk=(n,i,c,p)=>{const l={};for(let k=0;k<45;k++)if(Math.random()<p||k<5&&p>.6)l[dk(back(k))]=1;return{n,i,c,l}};
   Math.random=(s=>()=>(s=(s*16807)%2147483647)/2147483647)(7);S.h=[mk("اشرب ٢ لتر مية","💧",COLS[4],.8),mk("اقرا ٢٠ صفحة","📚",COLS[0],.6),mk("تمرين","🏃",COLS[2],.45)];delete S.h[0].l[dk(back(0))]}
-render();
+award(false);render();
 </script>
 </body></html>
+
 
