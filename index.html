@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1e1b4b">
+<title>عاداتي - متتبع العادات</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:linear-gradient(#1e1b4b,#0f172a);background-attachment:fixed;color:#f1f5f9;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;min-height:100vh;padding-bottom:100px}
+.wrap{max-width:540px;margin:auto;padding:16px}
+h1{margin:4px 0 2px;font-size:22px}
+.sub{color:#a5b4fc;font-size:14px;margin-bottom:14px}
+.sum{display:flex;gap:10px;margin-bottom:14px}
+.sum div{flex:1;background:#ffffff14;border-radius:16px;padding:12px;text-align:center}
+.sum b{display:block;font-size:26px}
+.sum span{font-size:12px;color:#c7d2fe}
+.ring{height:10px;background:#ffffff1a;border-radius:6px;overflow:hidden;margin-bottom:16px}
+.ring i{display:block;height:100%;background:linear-gradient(90deg,#818cf8,#34d399);transition:.5s}
+.h{background:#ffffff12;border-radius:18px;padding:14px;margin-bottom:12px}
+.top{display:flex;align-items:center;gap:12px}
+.ic{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;font-size:24px}
+.nm{flex:1;min-width:0}
+.nm b{display:block;font-size:17px}
+.nm span{font-size:13px;color:#c7d2fe}
+.chk{width:54px;height:54px;border-radius:50%;border:3px solid #818cf8;background:none;color:#fff;font-size:26px;transition:.2s}
+.chk.on{background:#34d399;border-color:#34d399;transform:scale(1.08)}
+.week{display:flex;gap:5px;margin-top:12px;justify-content:space-between}
+.d{flex:1;text-align:center;font-size:11px;color:#94a3b8}
+.d i{display:block;height:26px;border-radius:8px;background:#ffffff14;margin-top:3px}
+.d i.on{background:#818cf8}
+.d.t{color:#fff;font-weight:700}
+.heat{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;margin-top:10px}
+.heat i{aspect-ratio:1;border-radius:3px;background:#ffffff10}
+.del{background:none;border:0;color:#64748b;font-size:13px;margin-top:8px;font-family:inherit}
+.fab{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#818cf8;color:#1e1b4b;border:0;border-radius:30px;padding:16px 34px;font-size:18px;font-weight:800;font-family:inherit;box-shadow:0 8px 24px #0008}
+.modal{position:fixed;inset:0;background:#000a;display:none;align-items:flex-end;z-index:5}
+.modal.on{display:flex}
+.sheet{background:#1e1b4b;width:100%;max-width:540px;margin:auto;border-radius:24px 24px 0 0;padding:18px}
+input{width:100%;background:#0f172a;border:1px solid #4338ca;color:#fff;border-radius:12px;padding:14px;font-size:18px;margin-bottom:12px;font-family:inherit}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.opts button{width:46px;height:46px;border-radius:14px;border:2px solid transparent;background:#0f172a;font-size:22px}
+.opts button.on{border-color:#fff}
+.cl{width:34px!important;height:34px!important;border-radius:50%!important}
+.go{width:100%;background:#818cf8;color:#1e1b4b;border:0;border-radius:14px;padding:15px;font-size:18px;font-weight:800;font-family:inherit}
+canvas#cf{position:fixed;inset:0;pointer-events:none;z-index:9}
+</style>
+</head>
+<body>
+<canvas id="cf"></canvas>
+<div class="wrap">
+  <h1>🌱 عاداتي</h1><div class="sub" id="date"></div>
+  <div class="sum"><div><b id="s1">٠</b><span>تمت النهارده</span></div><div><b id="s2">٠</b><span>أطول سلسلة 🔥</span></div><div><b id="s3">٠٪</b><span>هذا الأسبوع</span></div></div>
+  <div class="ring"><i id="rg" style="width:0"></i></div>
+  <div id="list"></div>
+</div>
+<button class="fab" id="add">+ عادة جديدة</button>
+<div class="modal" id="modal"><div class="sheet">
+  <input id="nm" placeholder="اسم العادة (مثلاً: اشرب مية)" maxlength="30">
+  <div class="opts" id="ics"></div><div class="opts" id="cls"></div>
+  <button class="go" id="save">حفظ</button><button class="del" id="cx" style="width:100%">إلغاء</button>
+</div></div>
+<script>
+const $=id=>document.getElementById(id);
+const AR=n=>String(n).replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
+const ICONS=["💧","📚","🏃","🧘","🥗","😴","🕌","✍️","💪","🎯","🦷","🚭"],COLS=["#818cf8","#34d399","#f472b6","#fbbf24","#38bdf8","#fb923c"];
+const DN=["أحد","اثنين","ثلاثاء","أربعاء","خميس","جمعة","سبت"],MN=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+let S;try{S=JSON.parse(localStorage.getItem("habits1")||"null")}catch(e){}S=S||{h:[]};
+const save=()=>localStorage.setItem("habits1",JSON.stringify(S));
+const dk=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const back=n=>{const d=new Date();d.setDate(d.getDate()-n);return d};
+const streak=h=>{let n=0,i=h.l[dk(back(0))]?0:1;while(h.l[dk(back(i))]){n++;i++}return n};
+const best=h=>{const ks=Object.keys(h.l).sort();let b=0,c=0,p=null;ks.forEach(k=>{const d=new Date(k+"T00:00:00");if(p&&Math.round((d-p)/864e5)==1)c++;else c=1;b=Math.max(b,c);p=d});return b};
+function render(){
+  const t=new Date();$("date").textContent=DN[t.getDay()]+" "+AR(t.getDate())+" "+MN[t.getMonth()];
+  const td=dk(t);let done=0;S.h.forEach(h=>{if(h.l[td])done++});
+  let wk=0,wt=0;S.h.forEach(h=>{for(let i=0;i<7;i++){wt++;if(h.l[dk(back(i))])wk++}});
+  $("s1").textContent=AR(done)+"/"+AR(S.h.length);$("s2").textContent=AR(Math.max(0,...S.h.map(best)));$("s3").textContent=AR(wt?Math.round(wk/wt*100):0)+"٪";
+  $("rg").style.width=(S.h.length?done/S.h.length*100:0)+"%";
+  $("list").innerHTML=S.h.length?S.h.map((h,i)=>{
+    const wkh=[6,5,4,3,2,1,0].map(n=>{const d=back(n);return `<div class="d ${n==0?"t":""}">${DN[d.getDay()]}<i class="${h.l[dk(d)]?"on":""}" style="${h.l[dk(d)]?"background:"+h.c:""}"></i></div>`}).join("");
+    const heat=Array.from({length:42},(_,k)=>{const d=back(41-k);return `<i style="${h.l[dk(d)]?"background:"+h.c:""}"></i>`}).join("");
+    return `<div class="h"><div class="top"><div class="ic" style="background:${h.c}33">${h.i}</div><div class="nm"><b>${h.n.replace(/</g,"&lt;")}</b><span>🔥 ${AR(streak(h))} يوم · أفضل ${AR(best(h))}</span></div><button class="chk ${h.l[td]?"on":""}" data-i="${i}">${h.l[td]?"✓":""}</button></div><div class="week">${wkh}</div><div class="heat">${heat}</div><button class="del" data-del="${i}">حذف</button></div>`}).join(""):'<p style="text-align:center;color:#a5b4fc;margin:50px 0">مفيش عادات لسه. دوس "عادة جديدة" وابدأ.</p>';
+}
+$("list").onclick=e=>{const c=e.target.closest(".chk"),d=e.target.closest("[data-del]");
+  if(c){const h=S.h[+c.dataset.i],k=dk(new Date());if(h.l[k])delete h.l[k];else{h.l[k]=1;confetti(c)}save();render()}
+  else if(d&&confirm("تحذف العادة؟")){S.h.splice(+d.dataset.del,1);save();render()}};
+let ic=0,cl=0;
+function pick(){$("ics").innerHTML=ICONS.map((x,i)=>`<button data-i="${i}" class="${i==ic?"on":""}">${x}</button>`).join("");$("cls").innerHTML=COLS.map((x,i)=>`<button data-i="${i}" class="cl ${i==cl?"on":""}" style="background:${x}"></button>`).join("")}
+$("ics").onclick=e=>{const b=e.target.closest("button");if(b){ic=+b.dataset.i;pick()}};$("cls").onclick=e=>{const b=e.target.closest("button");if(b){cl=+b.dataset.i;pick()}};
+$("add").onclick=()=>{$("nm").value="";ic=0;cl=0;pick();$("modal").classList.add("on");setTimeout(()=>$("nm").focus(),50)};
+$("cx").onclick=()=>$("modal").classList.remove("on");
+$("save").onclick=()=>{const n=$("nm").value.trim();if(!n){$("nm").focus();return}S.h.push({n,i:ICONS[ic],c:COLS[cl],l:{}});save();$("modal").classList.remove("on");render()};
+function confetti(el){const c=$("cf"),x=c.getContext("2d");c.width=innerWidth;c.height=innerHeight;const r=el.getBoundingClientRect(),P=[];
+  for(let i=0;i<40;i++)P.push({x:r.left+r.width/2,y:r.top+r.height/2,vx:(Math.random()-.5)*10,vy:-Math.random()*10-2,c:COLS[i%6],l:1});
+  (function f(){x.clearRect(0,0,c.width,c.height);let a=0;P.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.l-=.02;if(p.l>0){a=1;x.globalAlpha=p.l;x.fillStyle=p.c;x.fillRect(p.x,p.y,7,7)}});if(a)requestAnimationFrame(f);else x.clearRect(0,0,c.width,c.height)})()}
+if(location.search.includes("demo")&&!S.h.length){const mk=(n,i,c,p)=>{const l={};for(let k=0;k<45;k++)if(Math.random()<p||k<5&&p>.6)l[dk(back(k))]=1;return{n,i,c,l}};
+  Math.random=(s=>()=>(s=(s*16807)%2147483647)/2147483647)(7);S.h=[mk("اشرب ٢ لتر مية","💧",COLS[4],.8),mk("اقرا ٢٠ صفحة","📚",COLS[0],.6),mk("تمرين","🏃",COLS[2],.45)];delete S.h[0].l[dk(back(0))]}
+render();
+</script>
+</body></html>
