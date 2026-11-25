@@ -33,6 +33,14 @@ h1{margin:4px 0 2px;font-size:22px}
 .heat{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;margin-top:10px}
 .heat i{aspect-ratio:1;border-radius:3px;background:#ffffff10}
 .del{background:none;border:0;color:#64748b;font-size:13px;margin-top:8px;font-family:inherit}
+.bar2{display:flex;gap:8px;margin-bottom:12px}
+.bar2 button,.ed{background:#ffffff14;border:0;color:#c7d2fe;border-radius:10px;padding:8px 12px;font-size:13px;font-family:inherit}
+.ed{background:none;padding:0;margin-top:8px;margin-inline-end:14px;color:#a5b4fc}
+.d{cursor:pointer}
+.pc{font-size:12px;color:#a5b4fc;margin-top:6px}
+.msg{background:#34d39922;border:1px solid #34d39966;color:#a7f3d0;border-radius:14px;padding:10px;text-align:center;margin-bottom:12px;font-size:14px}
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:#0f172a;border:1px solid #4338ca;border-radius:14px;padding:10px 16px;display:none;gap:14px;align-items:center;z-index:8;font-size:14px;white-space:nowrap}
+.toast button{background:none;border:0;color:#818cf8;font-weight:800;font-family:inherit;font-size:14px}
 .fab{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#818cf8;color:#1e1b4b;border:0;border-radius:30px;padding:16px 34px;font-size:18px;font-weight:800;font-family:inherit;box-shadow:0 8px 24px #0008}
 .modal{position:fixed;inset:0;background:#000a;display:none;align-items:flex-end;z-index:5}
 .modal.on{display:flex}
@@ -47,23 +55,24 @@ canvas#cf{position:fixed;inset:0;pointer-events:none;z-index:9}
 </style>
 </head>
 <body>
-<canvas id="cf"></canvas>
+<canvas id="cf"></canvas><div class="toast" id="toast"><span id="tm"></span><button id="tu">تراجع</button></div>
 <div class="wrap">
   <h1>🌱 عاداتي</h1><div class="sub" id="date"></div>
   <div class="sum"><div><b id="s1">٠</b><span>تمت النهارده</span></div><div><b id="s2">٠</b><span>أطول سلسلة 🔥</span></div><div><b id="s3">٠٪</b><span>هذا الأسبوع</span></div></div>
-  <div class="ring"><i id="rg" style="width:0"></i></div>
+  <div id="mg"></div><div class="ring"><i id="rg" style="width:0"></i></div>
+  <div class="bar2"><button id="exp">⬇️ نسخة احتياطية</button><button id="imp">⬆️ استرجاع</button><input type="file" id="impf" accept=".json,application/json" hidden></div>
   <div id="list"></div>
 </div>
 <button class="fab" id="add">+ عادة جديدة</button>
 <div class="modal" id="modal"><div class="sheet">
   <input id="nm" placeholder="اسم العادة (مثلاً: اشرب مية)" maxlength="30">
   <div class="opts" id="ics"></div><div class="opts" id="cls"></div>
-  <button class="go" id="save">حفظ</button><button class="del" id="cx" style="width:100%">إلغاء</button>
+  <div id="edt" style="display:none;color:#a5b4fc;font-size:13px;margin-bottom:8px">تعديل العادة</div><button class="go" id="save">حفظ</button><button class="del" id="cx" style="width:100%">إلغاء</button>
 </div></div>
 <script>
 const $=id=>document.getElementById(id);
 const AR=n=>String(n).replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
-const ICONS=["💧","📚","🏃","🧘","🥗","😴","🕌","✍️","💪","🎯","🦷","🚭"],COLS=["#818cf8","#34d399","#f472b6","#fbbf24","#38bdf8","#fb923c"];
+const ICONS=["💧","📚","🏃","🧘","🥗","😴","🕌","✍️","💪","🎯","🦷","🚭","🚶","💊","🧹","📵","☀️","❤️","🎨","🎧"],COLS=["#818cf8","#34d399","#f472b6","#fbbf24","#38bdf8","#fb923c"];
 const DN=["أحد","اثنين","ثلاثاء","أربعاء","خميس","جمعة","سبت"],MN=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 let S;try{S=JSON.parse(localStorage.getItem("habits1")||"null")}catch(e){}S=S||{h:[]};
 const save=()=>localStorage.setItem("habits1",JSON.stringify(S));
@@ -76,26 +85,39 @@ function render(){
   const td=dk(t);let done=0;S.h.forEach(h=>{if(h.l[td])done++});
   let wk=0,wt=0;S.h.forEach(h=>{for(let i=0;i<7;i++){wt++;if(h.l[dk(back(i))])wk++}});
   $("s1").textContent=AR(done)+"/"+AR(S.h.length);$("s2").textContent=AR(Math.max(0,...S.h.map(best)));$("s3").textContent=AR(wt?Math.round(wk/wt*100):0)+"٪";
+  $("mg").innerHTML=S.h.length&&done==S.h.length?'<div class="msg">🎉 خلصت كل عاداتك النهارده، برافو عليك!</div>':"";
   $("rg").style.width=(S.h.length?done/S.h.length*100:0)+"%";
   $("list").innerHTML=S.h.length?S.h.map((h,i)=>{
-    const wkh=[6,5,4,3,2,1,0].map(n=>{const d=back(n);return `<div class="d ${n==0?"t":""}">${DN[d.getDay()]}<i class="${h.l[dk(d)]?"on":""}" style="${h.l[dk(d)]?"background:"+h.c:""}"></i></div>`}).join("");
+    const wkh=[6,5,4,3,2,1,0].map(n=>{const d=back(n);return `<div class="d ${n==0?"t":""}" data-hi="${i}" data-dk="${dk(d)}">${DN[d.getDay()]}<i class="${h.l[dk(d)]?"on":""}" style="${h.l[dk(d)]?"background:"+h.c:""}"></i></div>`}).join("");
     const heat=Array.from({length:42},(_,k)=>{const d=back(41-k);return `<i style="${h.l[dk(d)]?"background:"+h.c:""}"></i>`}).join("");
-    return `<div class="h"><div class="top"><div class="ic" style="background:${h.c}33">${h.i}</div><div class="nm"><b>${h.n.replace(/</g,"&lt;")}</b><span>🔥 ${AR(streak(h))} يوم · أفضل ${AR(best(h))}</span></div><button class="chk ${h.l[td]?"on":""}" data-i="${i}">${h.l[td]?"✓":""}</button></div><div class="week">${wkh}</div><div class="heat">${heat}</div><button class="del" data-del="${i}">حذف</button></div>`}).join(""):'<p style="text-align:center;color:#a5b4fc;margin:50px 0">مفيش عادات لسه. دوس "عادة جديدة" وابدأ.</p>';
+    return `<div class="h"><div class="top"><div class="ic" style="background:${h.c}33">${h.i}</div><div class="nm"><b>${h.n.replace(/</g,"&lt;")}</b><span>🔥 ${AR(streak(h))} يوم · أفضل ${AR(best(h))}</span></div><button class="chk ${h.l[td]?"on":""}" data-i="${i}">${h.l[td]?"✓":""}</button></div><div class="week">${wkh}</div><div class="heat">${heat}</div><div class="pc">آخر ٣٠ يوم: ${AR(Math.round(Array.from({length:30},(_,k)=>h.l[dk(back(k))]?1:0).reduce((a,b)=>a+b,0)/30*100))}٪ · إجمالي ${AR(Object.keys(h.l).length)} يوم</div><button class="ed" data-ed="${i}">تعديل</button><button class="del" data-del="${i}">حذف</button></div>`}).join(""):'<p style="text-align:center;color:#a5b4fc;margin:50px 0">مفيش عادات لسه. دوس "عادة جديدة" وابدأ.</p>';
 }
 $("list").onclick=e=>{const c=e.target.closest(".chk"),d=e.target.closest("[data-del]");
   if(c){const h=S.h[+c.dataset.i],k=dk(new Date());if(h.l[k])delete h.l[k];else{h.l[k]=1;confetti(c)}save();render()}
-  else if(d&&confirm("تحذف العادة؟")){S.h.splice(+d.dataset.del,1);save();render()}};
+  else if(d){const i=+d.dataset.del,h=S.h[i];S.h.splice(i,1);save();render();undo("اتحذفت العادة",()=>{S.h.splice(i,0,h);save();render()})}
+  else if(e.target.closest("[data-ed]")){openEd(+e.target.closest("[data-ed]").dataset.ed)}
+  else{const w=e.target.closest(".d[data-dk]");if(w){const h=S.h[+w.dataset.hi],k=w.dataset.dk;if(h.l[k])delete h.l[k];else h.l[k]=1;save();render()}}};
+let ut=null,ufn=null;
+function undo(m,f){$("tm").textContent=m;ufn=f;$("toast").style.display="flex";clearTimeout(ut);ut=setTimeout(()=>{$("toast").style.display="none";ufn=null},5000)}
+$("tu").onclick=()=>{if(ufn)ufn();ufn=null;$("toast").style.display="none"};
+let ed=-1;
+function openEd(i){ed=i;const h=S.h[i];$("nm").value=h.n;ic=Math.max(0,ICONS.indexOf(h.i));cl=Math.max(0,COLS.indexOf(h.c));pick();$("edt").style.display="block";$("modal").classList.add("on")}
 let ic=0,cl=0;
 function pick(){$("ics").innerHTML=ICONS.map((x,i)=>`<button data-i="${i}" class="${i==ic?"on":""}">${x}</button>`).join("");$("cls").innerHTML=COLS.map((x,i)=>`<button data-i="${i}" class="cl ${i==cl?"on":""}" style="background:${x}"></button>`).join("")}
-$("ics").onclick=e=>{const b=e.target.closest("button");if(b){ic=+b.dataset.i;pick()}};$("cls").onclick=e=>{const b=e.target.closest("button");if(b){cl=+b.dataset.i;pick()}};
-$("add").onclick=()=>{$("nm").value="";ic=0;cl=0;pick();$("modal").classList.add("on");setTimeout(()=>$("nm").focus(),50)};
+$("ics").onclick=e=>{const b=e.target.closest("button");if(b){ic=+b.dataset.i;pick()}};$("nm").onkeydown=e=>{if(e.key=="Enter")$("save").click()};$("cls").onclick=e=>{const b=e.target.closest("button");if(b){cl=+b.dataset.i;pick()}};
+$("add").onclick=()=>{ed=-1;$("edt").style.display="none";$("nm").value="";ic=0;cl=0;pick();$("modal").classList.add("on");setTimeout(()=>$("nm").focus(),50)};
 $("cx").onclick=()=>$("modal").classList.remove("on");
-$("save").onclick=()=>{const n=$("nm").value.trim();if(!n){$("nm").focus();return}S.h.push({n,i:ICONS[ic],c:COLS[cl],l:{}});save();$("modal").classList.remove("on");render()};
+$("save").onclick=()=>{const n=$("nm").value.trim();if(!n){$("nm").focus();return}if(ed>=0){Object.assign(S.h[ed],{n,i:ICONS[ic],c:COLS[cl]});ed=-1}else S.h.push({n,i:ICONS[ic],c:COLS[cl],l:{}});save();$("modal").classList.remove("on");render()};
 function confetti(el){const c=$("cf"),x=c.getContext("2d");c.width=innerWidth;c.height=innerHeight;const r=el.getBoundingClientRect(),P=[];
   for(let i=0;i<40;i++)P.push({x:r.left+r.width/2,y:r.top+r.height/2,vx:(Math.random()-.5)*10,vy:-Math.random()*10-2,c:COLS[i%6],l:1});
   (function f(){x.clearRect(0,0,c.width,c.height);let a=0;P.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.l-=.02;if(p.l>0){a=1;x.globalAlpha=p.l;x.fillStyle=p.c;x.fillRect(p.x,p.y,7,7)}});if(a)requestAnimationFrame(f);else x.clearRect(0,0,c.width,c.height)})()}
+$("exp").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:"application/json"}));a.download="habits-"+dk(new Date())+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("imp").onclick=()=>$("impf").click();
+$("impf").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{const o=JSON.parse(t);if(!o||!Array.isArray(o.h)||o.h.some(h=>!h||typeof h.n!="string"||!h.l||typeof h.l!="object"))throw 0;if(!confirm("هيتبدّل اللي عندك بالنسخة دي. متأكد؟"))return;S=o;save();render()}).catch(()=>alert("الملف مش نسخة صحيحة"));e.target.value=""};
+let lastD=dk(new Date());setInterval(()=>{if(dk(new Date())!=lastD){lastD=dk(new Date());render()}},30000);document.addEventListener("visibilitychange",()=>{if(!document.hidden&&dk(new Date())!=lastD){lastD=dk(new Date());render()}});
 if(location.search.includes("demo")&&!S.h.length){const mk=(n,i,c,p)=>{const l={};for(let k=0;k<45;k++)if(Math.random()<p||k<5&&p>.6)l[dk(back(k))]=1;return{n,i,c,l}};
   Math.random=(s=>()=>(s=(s*16807)%2147483647)/2147483647)(7);S.h=[mk("اشرب ٢ لتر مية","💧",COLS[4],.8),mk("اقرا ٢٠ صفحة","📚",COLS[0],.6),mk("تمرين","🏃",COLS[2],.45)];delete S.h[0].l[dk(back(0))]}
 render();
 </script>
 </body></html>
+
